@@ -127,7 +127,7 @@ async function updatePost(postId, fields = {}) {
         SET ${ setString }
         WHERE id=$${ setString.length + 1 }
         RETURNING *;
-      `, [...Object.values(fields)), postId];
+      `), [...Object.values(fields), postId];
     }
 
     // return early if there's no tags to update
