@@ -1,3 +1,4 @@
+
 const { Client } = require('pg') // imports the pg module
 
 const client = new Client('postgres://localhost:5432/juicebox-dev');
@@ -110,11 +111,10 @@ async function createPost({
 }
 
 async function updatePost(postId, fields = {}) {
-  // read off the tags & remove that field 
-  const { tags } = fields; // might be undefined
+  const { tags } = fields;
   delete fields.tags;
 
-  // build the set string
+
   const setString = Object.keys(fields).map(
     (key, index) => `"${ key }"=$${ index + 1 }`
   ).join(', ');
@@ -125,9 +125,9 @@ async function updatePost(postId, fields = {}) {
       await client.query(`
         UPDATE posts
         SET ${ setString }
-        WHERE id=$${ setString.length + 1 }
+        WHERE id=$${ Object.keys(fields).length + 1 }
         RETURNING *;
-      `), [...Object.values(fields), postId];
+      `, [...Object.values(fields), postId]);
     }
 
     // return early if there's no tags to update
@@ -251,32 +251,24 @@ async function createTags(tagList) {
       return; 
     }
   
-    // need something like: $1), ($2), ($3 
     const insertValues = tagList.map(
       (_, index) => `$${index + 1}`).join('), (');
-    // then we can use: (${ insertValues }) in our string template
-  
-    // need something like $1, $2, $3
+
     const selectValues = tagList.map(
       (_, index) => `$${index + 1}`).join(', ');
-    // then we can use (${ selectValues }) in our string template
   
     try {
-      // insert the tags, doing nothing on conflict
-      // returning nothing, we'll query after
-      const { rows: [name] } = await client.query(`
+      const insertTags = await client.query(`
         INSERT INTO tags(name)
         VALUES(${insertValues})
         ON CONFLICT(name) DO NOTHING;
-      `);
-        
-      // select all tags where the name is in our taglist
-      // return the rows from the query
+      `, tagList);
+
       const { rows } = await client.query(`
         SELECT * FROM tags
         WHERE name
-        IN ($1, $2, $3);
-      `);
+        IN (${selectValues});
+      `, tagList);
 
       return rows;
 
