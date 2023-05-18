@@ -214,6 +214,14 @@ async function getPostById(postId) {
         FROM posts
         WHERE id=$1;
       `, [postId]);
+
+      //This is so that an error gets thrown if the postId does not exist//
+      if (!post) {
+        throw {
+          name: "PostNotFoundError",
+          message: "Could not find a post with that postId"
+        };
+      }
   
       const { rows: tags } = await client.query(`
         SELECT tags.*
