@@ -2,7 +2,7 @@ const express = require('express');
 const postsRouter = express.Router();
 //Require a user to be logged in to post
 const { requireUser } = require('./utils');
-const { createPost } = require('../db');
+const { createPost, updatePost, getPostById } = require('../db');
 
 postsRouter.post('/', requireUser, async (req, res, next) => {
     const { title, content, tags = "" } = req.body;
@@ -28,7 +28,42 @@ postsRouter.post('/', requireUser, async (req, res, next) => {
     } catch ({ name, message }) {
       next({ name, message });
     }
-  });
+});
+
+postsRouter.patch('/:postId', requireUser, async (req, res, next) => {
+    const { postId } = req.params;
+    const { title, content, tags } = req.body;
+  
+    const updateFields = {};
+  
+    if (tags && tags.length > 0) {
+      updateFields.tags = tags.trim().split(/\s+/);
+    }
+  
+    if (title) {
+      updateFields.title = title;
+    }
+  
+    if (content) {
+      updateFields.content = content;
+    }
+  
+    try {
+      const originalPost = await getPostById(postId);
+  
+      if (originalPost.author.id === req.user.id) {
+        const updatedPost = await updatePost(postId, updateFields);
+        res.send({ post: updatedPost })
+      } else {
+        next({
+          name: 'UnauthorizedUserError',
+          message: 'You cannot update a post that is not yours'
+        })
+      }
+    } catch ({ name, message }) {
+      next({ name, message });
+    }
+});
 
 const { getAllPosts } = require('../db');
 
