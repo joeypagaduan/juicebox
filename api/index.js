@@ -8,7 +8,7 @@ const { JWT_SECRET } = process.env;
 
 //setting req.user
 apiRouter.use(async (req, res, next) => {
-    const prefix = 'Bearer';
+    const prefix = 'Bearer ';
     const auth = req.header('Authorization');
 
     if (!auth) {
@@ -32,6 +32,14 @@ apiRouter.use(async (req, res, next) => {
             message: `Authorization token must start with ${ prefix }`
         });
     }
+});
+
+apiRouter.use((req, res, next) => {
+    if (req.user) {
+      console.log("User is set:", req.user);
+    }
+  
+    next();
 });
 
 // Routers from Day 1
