@@ -91,12 +91,32 @@ postsRouter.delete('/:postId', requireUser, async (req, res, next) => {
 
 const { getAllPosts } = require('../db');
 
-postsRouter.get('/', async (req, res) => {
-    const posts = await getAllPosts();
+postsRouter.get('/', async (req, res, next) => {
+    try {
+        const allPosts = await getAllPosts();
 
-    res.send({
-        posts
-    });
+        const posts = allPosts.filter(post => {
+        // keep a post if it is either active, or if it belongs to the current user
+            //for an ACTIVE post
+            if (post.active) {
+                return true;
+            }
+
+            //for a post that belongs to the user, whether active or not
+            if (req.user && post.author.id === req.user.id) {
+                return true;
+            }
+            
+            //else
+            return false;
+        });
+
+        res.send({
+            posts
+        });
+    }   catch ({ name, message }) {
+            next({ name, message });
+    }
 });
 
 module.exports = postsRouter;
