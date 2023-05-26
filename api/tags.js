@@ -11,10 +11,10 @@ tagsRouter.use((req, res, next) => {
 const { getAllTags } = require('../db');
 
 tagsRouter.get('/', async (req, res) => {
-    const posts = await getAllTags();
+    const rows = await getAllTags();
 
     res.send({
-        posts
+        rows
     });
 });
 
